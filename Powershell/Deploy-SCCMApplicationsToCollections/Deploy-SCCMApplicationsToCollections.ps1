@@ -150,6 +150,7 @@ Return $textList
 if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter One Collection Name Per Line or Enter a Search Pattern Such as 'MW:*':"}
 if($Applications -eq $null -or $Applications -eq "" -or $Applications -eq " "){$Applications = Show-TextBox -formText "Application Entry" -labelText "Enter One Application Name Per Line:"}
 foreach($Collection in $Collections){
+if(![string]::IsNullOrEmpty($Collection) -and $Collection -ne "" -and $Collection -ne " " -and $Collection -ne "`r`n"){
 [string]$CollectionSearchName = $Collection
 $CollectionList = Get-CMDeviceCollection -Name "$CollectionSearchName" | Select Name
 foreach($CollectionListItem in $CollectionList){
@@ -160,6 +161,7 @@ if(![string]::IsNullOrEmpty($CollectionName) -and $CollectionName -ne "" -and $C
 if(![string]::IsNullOrEmpty($ApplicationName) -and $ApplicationName -ne "" -and $ApplicationName -ne " " -and $ApplicationName -ne "`r`n"){
     Write-Output "Deploying $ApplicationName to $CollectionName"
     Start-Deploy -ApplicationName $ApplicationName -CollectionName $CollectionName
+}
 }
 }
 }
