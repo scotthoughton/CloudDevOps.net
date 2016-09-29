@@ -66,7 +66,7 @@ This command will promt for a list of collections and applications to deploy and
 param(
     [string[]]$Collections,
     [string[]]$Applications,
-    [string]$SiteCode = "CAS"
+    [string]$SiteCode
 )
 #Set Paths
 $path = (Split-Path -Path ((Get-Variable -Name MyInvocation).Value).MyCommand.Path)
@@ -147,16 +147,20 @@ $textList = @()
 $x | %{if(![string]::IsNullOrEmpty($_) -and $_ -ne "" -and $_ -ne " " -and $_ -ne "`r`n"){ $textList += $_ }}
 Return $textList
 }
-if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter 1 Collection Per Line or Enter Pattern Such as 'MW:*':"}
-if($Applications -eq $null -or $Applications -eq "" -or $Applications -eq " "){$Applications = Show-TextBox -formText "Application Entry" -labelText "Enter 1 Application Name Per Line:"}
+if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter One Collection Name Per Line or Enter a Search Pattern Such as 'MW:*':"}
+if($Applications -eq $null -or $Applications -eq "" -or $Applications -eq " "){$Applications = Show-TextBox -formText "Application Entry" -labelText "Enter One Application Name Per Line:"}
 foreach($Collection in $Collections){
-[string]$CollectionName = $Collection
+[string]$CollectionSearchName = $Collection
+$CollectionList = Get-CMDeviceCollection -Name "$CollectionSearchName" | Select Name
+foreach($CollectionListItem in $CollectionList){
+    [string]$CollectionName = $CollectionListItem.Name
 if(![string]::IsNullOrEmpty($CollectionName) -and $CollectionName -ne "" -and $CollectionName -ne " " -and $CollectionName -ne "`r`n"){
     foreach($Application in $Applications){
         [string]$ApplicationName = $Application
 if(![string]::IsNullOrEmpty($ApplicationName) -and $ApplicationName -ne "" -and $ApplicationName -ne " " -and $ApplicationName -ne "`r`n"){
     Write-Output "Deploying $ApplicationName to $CollectionName"
     Start-Deploy -ApplicationName $ApplicationName -CollectionName $CollectionName
+}
 }
 }
 }
