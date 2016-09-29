@@ -1,6 +1,6 @@
 <#   
 .SYNOPSIS   
-Deploys a list of applications to a list of collections for Microsoft System Center Configuration Manager 2012R2
+adds a list of Devices to a list of collections for Microsoft System Center Configuration Manager 2012R2
     
 .DESCRIPTION 
 This script uses the SCCM Module to connect to a SCCM server 
@@ -8,14 +8,14 @@ This script uses the SCCM Module to connect to a SCCM server
 .PARAMETER Collections
 List of SCCM Collections, with one Collection per line, or a Search Pattern Such as "MW:"
 
-.PARAMETER Applications
-List of SCCM Applications, with one application per line, to be deployed to the collections, each application will be deployed to each collection
+.PARAMETER Devices
+List of SCCM Devices, with one Device per line, to be added to the collections, each Device will be added to each collection
 
 .PARAMETER SiteCode
 SCCM SiteCode
 
 .NOTES   
-Name: Deploy-SCCMApplicationsToCollections.ps1
+Name: Add-SCCMDeviceToCollection.ps1
 Author: Scott W Houghton
 DateCreated: 2016-09-29
 DateUpdated: 2016-09-29
@@ -26,46 +26,45 @@ Version: 1.0.0
 http://CloudDevOps.net
 
 .EXAMPLE
-	.\Deploy-SCCMApplicationsToCollections.ps1 -Collections MyCollection -Applications MyApplication -SiteCode MSC
+	.\Add-SCCMDeviceToCollection.ps1 -Collections MyCollection -Devices MyDevice -SiteCode MSC
 
 Description
 -----------
-This command will deploy the application MyApplication to the collection MyCollection to site MSC
+This command will add the Device MyDevice to the collection MyCollection to site MSC
 
 .EXAMPLE
-	.\Deploy-SCCMApplicationsToCollections.ps1 -Collections MyCollection1, MyCollection2 -Applications MyApplication -SiteCode MSC
+	.\Add-SCCMDeviceToCollection.ps1 -Collections MyCollection1, MyCollection2 -Devices MyDevice -SiteCode MSC
 
 Description
 -----------
-This command will deploy the application MyApplication to the collections MyCollection1 and MyCollection2 to site MSC
+This command will add the Device MyDevice to the collections MyCollection1 and MyCollection2 to site MSC
 
 .EXAMPLE
-	.\Deploy-SCCMApplicationsToCollections.ps1 -Collections MyCollection1, MyCollection2 -SiteCode MSC
+	.\Add-SCCMDeviceToCollection.ps1 -Collections MyCollection1, MyCollection2 -SiteCode MSC
 
 Description
 -----------
-This command will prompt for the application to deploy to the collections MyCollection1 and MyCollection2 to site MSC
+This command will prompt for the Device to add to the collections MyCollection1 and MyCollection2 to site MSC
 
 .EXAMPLE
-	.\Deploy-SCCMApplicationsToCollections.ps1 -Applications MyApplication -SiteCode MSC
+	.\Add-SCCMDeviceToCollection.ps1 -Devices MyDevice -SiteCode MSC
 
 Description
 -----------
-This command will prompt for the collections to deploy the application MyApplication to to site MSC
+This command will prompt for the collections to add the Device MyDevice to to site MSC
 
 .EXAMPLE
-	.\Deploy-SCCMApplicationsToCollections.ps1
+	.\Add-SCCMDeviceToCollection.ps1
 
 Description
 -----------
-This command will promt for a list of collections and applications to deploy and promopt for the SiteCode
+This command will prompt for a list of collections and Devices to add and promopt for the SiteCode
 
 #>
 #Requires -Version 5 -Modules "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
-
 param(
     [string[]]$Collections,
-    [string[]]$Applications,
+    [string[]]$Devices,
     [string]$SiteCode
 )
 #Set Paths
@@ -84,11 +83,11 @@ import-module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConso
 if($SiteCode -eq $null -or $SiteCode -eq "" -or $SiteCode -eq " "){
 $SiteCode = (Show-TextBox -formText "SCCM Site Code Entry" -labelText "Enter SCCM Site Code:")
 }
+$SiteCode = $SiteCode.Trim(":")
+$SiteCode = $SiteCode + ":"
 Set-Location $SiteCode
-Function Start-Deploy([string]$ApplicationName,[string]$CollectionName){
-Start-CMApplicationDeployment -CollectionName "$CollectionName" -Name "$ApplicationName" `
--DeployAction "Install" -DeployPurpose "Require" -UserNotification "DisplaySoftwareCenterOnly" `
--PreDeploy $True -RebootOutsideServiceWindow $false -SendWakeUpPacket $false -UseMeteredNetwork $false
+Function Add-DeviceToCollection([string]$DeviceName,[string]$CollectionName){
+	Add-CMDeviceCollectionDirectMembershipRule  -CollectionName $CollectionName -ResourceId (get-cmdevice -Name $DeviceName).ResourceID
 }
 
 function Show-TextBox{
@@ -148,7 +147,7 @@ $x | %{if(![string]::IsNullOrEmpty($_) -and $_ -ne "" -and $_ -ne " " -and $_ -n
 Return $textList
 }
 if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter One Collection Name Per Line or Enter a Search Pattern Such as 'MW:*':"}
-if($Applications -eq $null -or $Applications -eq "" -or $Applications -eq " "){$Applications = Show-TextBox -formText "Application Entry" -labelText "Enter One Application Name Per Line:"}
+if($Devices -eq $null -or $Devices -eq "" -or $Devices -eq " "){$Devices = Show-TextBox -formText "Device Entry" -labelText "Enter One Device Name Per Line:"}
 foreach($Collection in $Collections){
 if(![string]::IsNullOrEmpty($Collection) -and $Collection -ne "" -and $Collection -ne " " -and $Collection -ne "`r`n"){
 [string]$CollectionSearchName = $Collection
@@ -156,11 +155,11 @@ $CollectionList = Get-CMDeviceCollection -Name "$CollectionSearchName" | Select 
 foreach($CollectionListItem in $CollectionList){
     [string]$CollectionName = $CollectionListItem.Name
 if(![string]::IsNullOrEmpty($CollectionName) -and $CollectionName -ne "" -and $CollectionName -ne " " -and $CollectionName -ne "`r`n"){
-    foreach($Application in $Applications){
-        [string]$ApplicationName = $Application
-if(![string]::IsNullOrEmpty($ApplicationName) -and $ApplicationName -ne "" -and $ApplicationName -ne " " -and $ApplicationName -ne "`r`n"){
-    Write-Output "Deploying $ApplicationName to $CollectionName"
-    Start-Deploy -ApplicationName $ApplicationName -CollectionName $CollectionName
+    foreach($Device in $Devices){
+        [string]$DeviceName = $Device
+if(![string]::IsNullOrEmpty($DeviceName) -and $DeviceName -ne "" -and $DeviceName -ne " " -and $DeviceName -ne "`r`n"){
+    Write-Output "Adding $DeviceName to $CollectionName"
+    Add-DeviceToCollection -DeviceName $DeviceName -CollectionName $CollectionName
 }
 }
 }
