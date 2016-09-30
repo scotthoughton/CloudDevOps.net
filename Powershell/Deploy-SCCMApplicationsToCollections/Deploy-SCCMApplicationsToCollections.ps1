@@ -61,9 +61,8 @@ Description
 This command will promt for a list of collections and applications to deploy and promopt for the SiteCode
 
 #>
-#Requires -Version 5 -Modules "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
-
-param(
+#Requires -Version 5
+zparam(
     [string[]]$Collections,
     [string[]]$Applications,
     [string]$SiteCode
@@ -78,12 +77,36 @@ $Logfile = "$path\Logs\$scriptName" + "-Log"+ $dateTime + ".txt"
 $transcriptPath = "$path\Logs\$scriptName" + "Transcript"+ $dateTime + ".txt"
 
 Start-Transcript -Path $transcriptPath
-#Module Requires SCCM Client To Be Installed
-import-module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+#Module Requires SCCM Client To Be Installed - Solves for 32bit OS
+if([Environment]::Is64BitOperatingSystem){
+    if((Test-Path "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\")){
+        import-module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+    }
+    else{
+        Write-Output "SCCM Module Not Installed"
+        Pause
+        Exit
+    }
+}
+else{
+    if((Test-Path "C:\Program Files\Microsoft Configuration Manager\AdminConsole\bin\")){
+        import-module "C:\Program Files\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+    }
+    else{
+        Write-Output "SCCM Module Not Installed"
+        Pause
+        Exit
+    }
+}
 #Set SCCM Site Code
 if($SiteCode -eq $null -or $SiteCode -eq "" -or $SiteCode -eq " "){
 $SiteCode = (Show-TextBox -formText "SCCM Site Code Entry" -labelText "Enter SCCM Site Code:")
 }
+#Clean Up Site Code and Format
+$SiteCode = $SiteCode.Trim("")
+$SiteCode = $SiteCode.Trim(":")
+$SiteCode = $SiteCode.Trim("`r`n")
+$SiteCode = $SiteCode + ":"
 Set-Location $SiteCode
 Function Start-Deploy([string]$ApplicationName,[string]$CollectionName){
 Start-CMApplicationDeployment -CollectionName "$CollectionName" -Name "$ApplicationName" `
@@ -147,8 +170,8 @@ $textList = @()
 $x | %{if(![string]::IsNullOrEmpty($_) -and $_ -ne "" -and $_ -ne " " -and $_ -ne "`r`n"){ $textList += $_ }}
 Return $textList
 }
-if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter One Collection Name Per Line or Enter a Search Pattern Such as 'MW:*':"}
-if($Applications -eq $null -or $Applications -eq "" -or $Applications -eq " "){$Applications = Show-TextBox -formText "Application Entry" -labelText "Enter One Application Name Per Line:"}
+if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter 1 Collection Per Line or Enter a Pattern, i.e.'MW:*':"}
+if($Applications -eq $null -or $Applications -eq "" -or $Applications -eq " "){$Applications = Show-TextBox -formText "Application Entry" -labelText "Enter 1 Application Name Per Line:"}
 foreach($Collection in $Collections){
 if(![string]::IsNullOrEmpty($Collection) -and $Collection -ne "" -and $Collection -ne " " -and $Collection -ne "`r`n"){
 [string]$CollectionSearchName = $Collection

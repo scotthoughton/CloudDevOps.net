@@ -1,9 +1,9 @@
 <#   
 .SYNOPSIS   
-adds a list of Devices to a list of collections for Microsoft System Center Configuration Manager 2012R2
+Adds a list of Devices to a list of collections for Microsoft System Center Configuration Manager 2012R2
     
 .DESCRIPTION 
-This script uses the SCCM Module to connect to a SCCM server 
+This script uses the SCCM Module to connect to a SCCM server and add the specified devices to the specified collections
  
 .PARAMETER Collections
 List of SCCM Collections, with one Collection per line, or a Search Pattern Such as "MW:"
@@ -61,11 +61,11 @@ Description
 This command will prompt for a list of collections and Devices to add and promopt for the SiteCode
 
 #>
-#Requires -Version 5 -Modules "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+#Requires -Version 5
 param(
     [string[]]$Collections,
     [string[]]$Devices,
-    [string]$SiteCode
+    [string]$SiteCode = "CAS:"
 )
 #Set Paths
 $path = (Split-Path -Path ((Get-Variable -Name MyInvocation).Value).MyCommand.Path)
@@ -77,8 +77,27 @@ $Logfile = "$path\Logs\$scriptName" + "-Log"+ $dateTime + ".txt"
 $transcriptPath = "$path\Logs\$scriptName" + "Transcript"+ $dateTime + ".txt"
 
 Start-Transcript -Path $transcriptPath
-#Module Requires SCCM Client To Be Installed
-import-module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+#Module Requires SCCM Client To Be Installed - Solves for 32bit OS
+if([Environment]::Is64BitOperatingSystem){
+    if((Test-Path "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\")){
+        import-module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+    }
+    else{
+        Write-Output "SCCM Module Not Installed"
+        Pause
+        Exit
+    }
+}
+else{
+    if((Test-Path "C:\Program Files\Microsoft Configuration Manager\AdminConsole\bin\")){
+        import-module "C:\Program Files\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+    }
+    else{
+        Write-Output "SCCM Module Not Installed"
+        Pause
+        Exit
+    }
+}
 #Set SCCM Site Code
 if($SiteCode -eq $null -or $SiteCode -eq "" -or $SiteCode -eq " "){
 $SiteCode = (Show-TextBox -formText "SCCM Site Code Entry" -labelText "Enter SCCM Site Code:")
@@ -146,8 +165,8 @@ $textList = @()
 $x | %{if(![string]::IsNullOrEmpty($_) -and $_ -ne "" -and $_ -ne " " -and $_ -ne "`r`n"){ $textList += $_ }}
 Return $textList
 }
-if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter One Collection Name Per Line or Enter a Search Pattern Such as 'MW:*':"}
-if($Devices -eq $null -or $Devices -eq "" -or $Devices -eq " "){$Devices = Show-TextBox -formText "Device Entry" -labelText "Enter One Device Name Per Line:"}
+if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter 1 Collection Per Line or Enter a Pattern, i.e.'MW:*':"}
+if($Devices -eq $null -or $Devices -eq "" -or $Devices -eq " "){$Devices = Show-TextBox -formText "Device Entry" -labelText "Enter 1 Device Name Per Line:"}
 foreach($Collection in $Collections){
 if(![string]::IsNullOrEmpty($Collection) -and $Collection -ne "" -and $Collection -ne " " -and $Collection -ne "`r`n"){
 [string]$CollectionSearchName = $Collection
