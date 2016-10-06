@@ -18,9 +18,9 @@ SCCM SiteCode
 Name: Add-SCCMDeviceToCollection.ps1
 Author: Scott W Houghton
 DateCreated: 2016-09-29
-DateUpdated: 2016-09-29
+DateUpdated: 2016-10-06
 Site: http://CloudDevOps.net
-Version: 1.0.0
+Version: 1.1.0
 
 .LINK
 http://CloudDevOps.net

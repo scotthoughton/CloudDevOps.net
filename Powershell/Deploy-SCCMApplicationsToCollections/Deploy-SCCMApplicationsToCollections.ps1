@@ -18,9 +18,9 @@ SCCM SiteCode
 Name: Deploy-SCCMApplicationsToCollections.ps1
 Author: Scott W Houghton
 DateCreated: 2016-09-29
-DateUpdated: 2016-09-29
+DateUpdated: 2016-10-06
 Site: http://CloudDevOps.net
-Version: 1.0.0
+Version: 1.1.0
 
 .LINK
 http://CloudDevOps.net
@@ -62,7 +62,7 @@ This command will promt for a list of collections and applications to deploy and
 
 #>
 #Requires -Version 5
-zparam(
+param(
     [string[]]$Collections,
     [string[]]$Applications,
     [string]$SiteCode
@@ -100,7 +100,7 @@ else{
 }
 #Set SCCM Site Code
 if($SiteCode -eq $null -or $SiteCode -eq "" -or $SiteCode -eq " "){
-$SiteCode = (Show-TextBox -formText "SCCM Site Code Entry" -labelText "Enter SCCM Site Code:")
+    $SiteCode = (Show-TextBox -formText "SCCM Site Code Entry" -labelText "Enter SCCM Site Code:")
 }
 #Clean Up Site Code and Format
 $SiteCode = $SiteCode.Trim("")
@@ -108,10 +108,12 @@ $SiteCode = $SiteCode.Trim(":")
 $SiteCode = $SiteCode.Trim("`r`n")
 $SiteCode = $SiteCode + ":"
 Set-Location $SiteCode
+
+
 Function Start-Deploy([string]$ApplicationName,[string]$CollectionName){
-Start-CMApplicationDeployment -CollectionName "$CollectionName" -Name "$ApplicationName" `
--DeployAction "Install" -DeployPurpose "Require" -UserNotification "DisplaySoftwareCenterOnly" `
--PreDeploy $True -RebootOutsideServiceWindow $false -SendWakeUpPacket $false -UseMeteredNetwork $false
+    Start-CMApplicationDeployment -CollectionName "$CollectionName" -Name "$ApplicationName" `
+    -DeployAction "Install" -DeployPurpose "Require" -UserNotification "DisplaySoftwareCenterOnly" `
+    -PreDeploy $True -RebootOutsideServiceWindow $false -SendWakeUpPacket $false -UseMeteredNetwork $false
 }
 
 function Show-TextBox{
@@ -120,75 +122,77 @@ function Show-TextBox{
         [string]$labelText = "Please enter the information in the space below:"
     )
     [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing") 
-[void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") 
+    [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") 
 
-$objForm = New-Object System.Windows.Forms.Form 
-$objForm.Text = $formText
-$objForm.Size = New-Object System.Drawing.Size(300,300) 
-$objForm.StartPosition = "CenterScreen"
+    $objForm = New-Object System.Windows.Forms.Form 
+    $objForm.Text = $formText
+    $objForm.Size = New-Object System.Drawing.Size(300,300) 
+    $objForm.StartPosition = "CenterScreen"
 
-$objForm.KeyPreview = $True
-$objForm.Add_KeyDown({if ($_.KeyCode -eq "Escape") 
-    {$objForm.Close()}})
+    $objForm.KeyPreview = $True
+    $objForm.Add_KeyDown({if ($_.KeyCode -eq "Escape") 
+        {$objForm.Close()}})
 
-$OKButton = New-Object System.Windows.Forms.Button
-$OKButton.Location = New-Object System.Drawing.Size(75,225)
-$OKButton.Size = New-Object System.Drawing.Size(75,23)
-$OKButton.Text = "OK"
-$OKButton.Add_Click({$x=$objTextBox.Text;$objForm.Close()})
-$objForm.Controls.Add($OKButton)
+    $OKButton = New-Object System.Windows.Forms.Button
+    $OKButton.Location = New-Object System.Drawing.Size(75,225)
+    $OKButton.Size = New-Object System.Drawing.Size(75,23)
+    $OKButton.Text = "OK"
+    $OKButton.Add_Click({$x=$objTextBox.Text;$objForm.Close()})
+    $objForm.Controls.Add($OKButton)
 
-$CancelButton = New-Object System.Windows.Forms.Button
-$CancelButton.Location = New-Object System.Drawing.Size(150,225)
-$CancelButton.Size = New-Object System.Drawing.Size(75,23)
-$CancelButton.Text = "Cancel"
-$CancelButton.Add_Click({$objForm.Close()})
-$objForm.Controls.Add($CancelButton)
+    $CancelButton = New-Object System.Windows.Forms.Button
+    $CancelButton.Location = New-Object System.Drawing.Size(150,225)
+    $CancelButton.Size = New-Object System.Drawing.Size(75,23)
+    $CancelButton.Text = "Cancel"
+    $CancelButton.Add_Click({$objForm.Close()})
+    $objForm.Controls.Add($CancelButton)
 
-$objLabel = New-Object System.Windows.Forms.Label
-$objLabel.Location = New-Object System.Drawing.Size(10,20) 
-$objLabel.Size = New-Object System.Drawing.Size(280,20) 
-$objLabel.Text = $labelText
-$objForm.Controls.Add($objLabel) 
+    $objLabel = New-Object System.Windows.Forms.Label
+    $objLabel.Location = New-Object System.Drawing.Size(10,20) 
+    $objLabel.Size = New-Object System.Drawing.Size(280,20) 
+    $objLabel.Text = $labelText
+    $objForm.Controls.Add($objLabel) 
 
-$objTextBox = New-Object System.Windows.Forms.TextBox 
-$objTextBox.Multiline = $True
-$objTextBox.AcceptsReturn = $True
-$objTextBox.Location = New-Object System.Drawing.Size(10,40) 
-$objTextBox.Size = New-Object System.Drawing.Size(260,175) 
-$objForm.Controls.Add($objTextBox) 
+    $objTextBox = New-Object System.Windows.Forms.TextBox 
+    $objTextBox.Multiline = $True
+    $objTextBox.AcceptsReturn = $True
+    $objTextBox.Location = New-Object System.Drawing.Size(10,40) 
+    $objTextBox.Size = New-Object System.Drawing.Size(260,175) 
+    $objForm.Controls.Add($objTextBox) 
 
-$objForm.Topmost = $True
+    $objForm.Topmost = $True
 
-$objForm.Add_Shown({$objForm.Activate()})
-[void] $objForm.ShowDialog()
-[String[]]$x
-$x = $objTextBox.Text.Split("`r`n")
-$x = $x.Trim(" ")
-$x = $x.Trim()
-$textList = @()
-$x | %{if(![string]::IsNullOrEmpty($_) -and $_ -ne "" -and $_ -ne " " -and $_ -ne "`r`n"){ $textList += $_ }}
-Return $textList
+    $objForm.Add_Shown({$objForm.Activate()})
+    [void] $objForm.ShowDialog()
+    [String[]]$x
+    $x = $objTextBox.Text.Split("`r`n")
+    $x = $x.Trim(" ")
+    $x = $x.Trim()
+    $textList = @()
+    $x | %{if(![string]::IsNullOrEmpty($_) -and $_ -ne "" -and $_ -ne " " -and $_ -ne "`r`n"){ $textList += $_ }}
+    Return $textList
 }
+#Show TextBoxes if Parms not set
 if($Collections -eq $null -or $Collections -eq "" -or $Collections -eq " "){$Collections = Show-TextBox -formText "Collection Entry" -labelText "Enter 1 Collection Per Line or Enter a Pattern, i.e.'MW:*':"}
 if($Applications -eq $null -or $Applications -eq "" -or $Applications -eq " "){$Applications = Show-TextBox -formText "Application Entry" -labelText "Enter 1 Application Name Per Line:"}
+
 foreach($Collection in $Collections){
-if(![string]::IsNullOrEmpty($Collection) -and $Collection -ne "" -and $Collection -ne " " -and $Collection -ne "`r`n"){
-[string]$CollectionSearchName = $Collection
-$CollectionList = Get-CMDeviceCollection -Name "$CollectionSearchName" | Select Name
-foreach($CollectionListItem in $CollectionList){
-    [string]$CollectionName = $CollectionListItem.Name
-if(![string]::IsNullOrEmpty($CollectionName) -and $CollectionName -ne "" -and $CollectionName -ne " " -and $CollectionName -ne "`r`n"){
-    foreach($Application in $Applications){
-        [string]$ApplicationName = $Application
-if(![string]::IsNullOrEmpty($ApplicationName) -and $ApplicationName -ne "" -and $ApplicationName -ne " " -and $ApplicationName -ne "`r`n"){
-    Write-Output "Deploying $ApplicationName to $CollectionName"
-    Start-Deploy -ApplicationName $ApplicationName -CollectionName $CollectionName
-}
-}
-}
-}
-}
+    if(![string]::IsNullOrEmpty($Collection) -and $Collection -ne "" -and $Collection -ne " " -and $Collection -ne "`r`n"){
+        [string]$CollectionSearchName = $Collection
+        $CollectionList = Get-CMDeviceCollection -Name "$CollectionSearchName" | Select Name
+        foreach($CollectionListItem in $CollectionList){
+            [string]$CollectionName = $CollectionListItem.Name
+            if(![string]::IsNullOrEmpty($CollectionName) -and $CollectionName -ne "" -and $CollectionName -ne " " -and $CollectionName -ne "`r`n"){
+                foreach($Application in $Applications){
+                    [string]$ApplicationName = $Application
+                    if(![string]::IsNullOrEmpty($ApplicationName) -and $ApplicationName -ne "" -and $ApplicationName -ne " " -and $ApplicationName -ne "`r`n"){
+                        Write-Output "Deploying $ApplicationName to $CollectionName"
+                        Start-Deploy -ApplicationName $ApplicationName -CollectionName $CollectionName
+                    }
+                }
+            }
+        }
+    }
 }
 Stop-Transcript
 pause

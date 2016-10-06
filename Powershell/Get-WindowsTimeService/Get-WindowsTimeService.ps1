@@ -3,7 +3,7 @@
 Script that returns current TimeZone on a computer
     
 .DESCRIPTION 
-This script uses the Schedule.Service Windows Registry to query the local or a remote computer in order to gather the current TimeZones
+This script uses the Windows Registry to query the local or a remote computer in order to gather the current TimeZones
  
 .PARAMETER Servers
 The computer that will be queried by this script, local administrative permissions are required to query this information
@@ -12,29 +12,29 @@ The computer that will be queried by this script, local administrative permissio
 Name: Get-WindowsTimeService.ps1
 Author: Scott W Houghton
 DateCreated: 2016-09-23
-DateUpdated: 2016-09-29
+DateUpdated: 2016-10-06
 Site: http://CloudDevOps.net
-Version: 1.2.0
+Version: 1.2.3
 
 .LINK
 http://CloudDevOps.net
 
 .EXAMPLE
-	.\Get-WindowsTimeService.ps1 $Servers server01
+	.\Get-WindowsTimeService.ps1 -Servers server01
 
 Description
 -----------
 This command will query server01 and displays the current TimeZone on that computer
 
 .EXAMPLE
-	.\Get-WindowsTimeService.ps1 $Servers server01,server02,server03
+	.\Get-WindowsTimeService.ps1 -Servers server01,server02,server03
 
 Description
 -----------
 This command will query server01,server02,server03 and displays the current TimeZone on the list of computers
 
 .EXAMPLE
-	.\Get-WindowsTimeService.ps1 $Servers $env:COMPUTERNAME
+	.\Get-WindowsTimeService.ps1 -Servers $env:COMPUTERNAME
 
 Description
 -----------
