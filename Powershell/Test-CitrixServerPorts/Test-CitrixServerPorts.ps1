@@ -137,8 +137,14 @@ if(![string]::IsNullOrEmpty($server) -and $server -ne "" -and $server -ne " " -a
 if($testHDX){
     LogWrite "$server - Citrix Port Connection Successful"
 }
+else{
+    LogWrite "$server - Citrix Port Connection Failed"
+}
 if($testRDP){
     LogWrite "$server - RDP Port Connection Successful"
+}
+else{
+    LogWrite "$server - RDP Port Connection Failed"
 }
 }
 }
