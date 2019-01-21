@@ -1,2 +1,2 @@
-# CloudDevOps.net
-Official Repository for CloudDevOps.net
+# DevOpsWithScott.com
+Official Repository for DevOpsWithScott.com
